@@ -32,6 +32,17 @@ void stackPrint(Stack *stack)
     }
 }
 
+Token* tokenSearchLabel(Token *head, char *label)
+{
+    while(head){
+        if(!strcmp(head->str+1, label))
+            return head;
+        head = head->next;
+    }
+    panic("Could not find label: \"%s\"", label);
+    return NULL;
+}
+
 int main(int argc, char **argv)
 {
     if(argc != 2)
@@ -39,11 +50,16 @@ int main(int argc, char **argv)
 
     char *src = fileReadText(argv[1]);
     Token *token = tokenize(src);
+    Token *head = token;
     free(src);
-
     Stack *stack = NULL;
     while(token){
+        printf("token: %s\n", token->str);
         Instruction i = 0;
+        if(token->str[i] == ':'){
+            token = token->next;
+            continue;
+        }
         for(i = 0; i <= I_NUM; i++){
             if(i >= I_NUM){
                 tokenPrint(token);
@@ -55,7 +71,35 @@ int main(int argc, char **argv)
         }
 
         switch(i){
-            case I_ADD:
+            case I_BRZ:{
+                assertExpr(stack);
+                token = token->next;
+                assertExpr(token);
+                if(stack->data == 0){
+                    token = tokenSearchLabel(head, token->str);
+                    break;
+                }
+                token = token->next;
+                break;
+            }
+            case I_BRNZ:{
+                assertExpr(stack);
+                token = token->next;
+                assertExpr(token);
+                if(stack->data != 0){
+                    token = tokenSearchLabel(head, token->str);
+                    break;
+                }
+                token = token->next;
+                break;
+            }
+            case I_GOTO:{
+                token = token->next;
+                assertExpr(token);
+                token = tokenSearchLabel(head, token->str);
+                break;
+            }
+            case I_ADD:{
                 assertExpr(stack);
                 const int a = stack->data;
                 Stack *next = stack->next;
@@ -63,10 +107,30 @@ int main(int argc, char **argv)
                 next->data += a;
                 free(stack);
                 stack = next;
-                tokenConsume(&token);
-                break;
+                token = token->next;
+                break;}
+            case I_SUB:{
+                assertExpr(stack);
+                const int a = stack->data;
+                Stack *next = stack->next;
+                assertExpr(next);
+                next->data -= a;
+                free(stack);
+                stack = next;
+                token = token->next;
+                break;}
+            case I_MUL:{
+                assertExpr(stack);
+                const int a = stack->data;
+                Stack *next = stack->next;
+                assertExpr(next);
+                next->data *= a;
+                free(stack);
+                stack = next;
+                token = token->next;
+                break;}
             case I_PUSH:
-                tokenConsume(&token);
+                token = token->next;
                 assertExpr(token);
                 const bool neg = *token->str == '-';
                 for(st i = 0; i < strlen(token->str); i++)
@@ -75,12 +139,25 @@ int main(int argc, char **argv)
                 if(neg)
                     assertExpr(strlen(token->str) > 1);
                 const ul nat = strtoul(neg ? token->str+1 : token->str, &end, 10);
-                assertExpr(nat < 8*sizeof(int));
                 stack = stackPush(stack, stackNew((int)nat * (neg ? -1 : 1)));
-                tokenConsume(&token);
+                token = token->next;
                 break;
+            case I_DUP:
+                stack = stackPush(stack, stackNew(stack->data));
+                token = token->next;
+                break;
+            case I_MOD:{
+                assertExpr(stack);
+                const int a = stack->data;
+                Stack *next = stack->next;
+                assertExpr(next);
+                next->data %= a;
+                free(stack);
+                stack = next;
+                token = token->next;
+                break;}
             case I_END:
-                tokenConsume(&token);
+                token = token->next;
                 break;
             default:
                 panic("unknown instruction: %zu", i);

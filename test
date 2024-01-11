@@ -1,4 +1,24 @@
+push 7
+:loop
+dup
+push 1
+sub
+brz end continue
+:continue
+dup
 push 2
+mod
+brz even odd
+:even
 push 2
+div
+goto loop
+:odd
+push 3
+mul
+push 1
 add
+goto loop
+:end
+push 1
 end
