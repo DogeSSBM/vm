@@ -1,16 +1,17 @@
-push 7
+push 0
 push 1
-push 1
+push 15
 :loop
-pluck 2
 brz end
-push 1
-sub
 pluck 2
-pluck 2
+dup
+pluck 3
 dup
 pluck 2
 add
+pluck 3
+push 1
+sub
 goto loop
 :end
 pop

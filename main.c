@@ -62,6 +62,8 @@ int main(int argc, char **argv)
     free(src);
     Stack *stack = NULL;
     while(token){
+        // stackPrint(stack);
+        // printf("%s\n", token->str);
         Instruction i = 0;
         if(token->str[i] == ':'){
             token = token->next;
