@@ -1,4 +1,4 @@
-push 17
+push 27
 :loop
 print1
 dup

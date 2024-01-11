@@ -43,11 +43,19 @@ Token* tokenSearchLabel(Token *head, char *label)
     return NULL;
 }
 
+Stack* stackReach(Stack *stack, const st n)
+{
+    for(st i = 0; i < n; i++){
+        stack = stack->next;
+        assertExpr(stack);
+    }
+    return stack;
+}
+
 int main(int argc, char **argv)
 {
     if(argc != 2)
         panic("Usage:\n\t\t%s <Input File>\n", argv[0]);
-
     char *src = fileReadText(argv[1]);
     Token *token = tokenize(src);
     Token *head = token;
@@ -79,6 +87,51 @@ int main(int argc, char **argv)
                 printf("stack -\n");
                 for(Stack *cur = stack; cur; cur = cur->next)
                     printf("%i\n", cur->data);
+                token = token->next;
+                break;
+            }
+            case I_REACH:{
+                token = token->next;
+                assertExpr(token);
+                for(st i = 0; i < strlen(token->str); i++)
+                    assertExpr(isdigit(token->str[i]));
+                char *end = NULL;
+                const ul nat = strtoul(token->str, &end, 10);
+                stack = stackPush(stack, stackNew(stackReach(stack, nat)->data));
+                token = token->next;
+                break;
+            }
+            case I_PLUCK:{
+                token = token->next;
+                assertExpr(token);
+                for(st i = 0; i < strlen(token->str); i++)
+                    assertExpr(isdigit(token->str[i]));
+                char *end = NULL;
+                const ul nat = strtoul(token->str, &end, 10);
+                Stack *temp = stackReach(stack, nat);
+                stack = stackPush(stack, stackNew(temp->data));
+                for(Stack *cur = stack; cur; cur = cur->next){
+                    if(cur->next == temp)
+                        cur->next = temp->next;
+                }
+                token = token->next;
+                break;
+            }
+            case I_BACK:{
+                token = token->next;
+                assertExpr(token);
+                for(st i = 0; i < strlen(token->str); i++)
+                    assertExpr(isdigit(token->str[i]));
+                char *end = NULL;
+                const ul nat = strtoul(token->str, &end, 10);
+                if(nat > 0){
+                    Stack *floating = stack;
+                    stack = stack->next;
+                    Stack *before = stackReach(stack, nat-1);
+                    Stack *next = before->next;
+                    before->next = floating;
+                    floating->next = next;
+                }
                 token = token->next;
                 break;
             }
