@@ -1,5 +1,5 @@
 push 3
-:loop
-push 1
-sub
-brnz loop
+dup
+push 2
+push 4
+dup

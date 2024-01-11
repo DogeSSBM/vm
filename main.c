@@ -54,7 +54,6 @@ int main(int argc, char **argv)
     free(src);
     Stack *stack = NULL;
     while(token){
-        printf("token: %s\n", token->str);
         Instruction i = 0;
         if(token->str[i] == ':'){
             token = token->next;
@@ -71,6 +70,18 @@ int main(int argc, char **argv)
         }
 
         switch(i){
+            case I_PRINT1:{
+                printf("%i\n", stack->data);
+                token = token->next;
+                break;
+            }
+            case I_PRINT:{
+                printf("stack -\n");
+                for(Stack *cur = stack; cur; cur = cur->next)
+                    printf("%i\n", cur->data);
+                token = token->next;
+                break;
+            }
             case I_BRZ:{
                 assertExpr(stack);
                 token = token->next;
@@ -129,6 +140,17 @@ int main(int argc, char **argv)
                 stack = next;
                 token = token->next;
                 break;}
+            case I_DIV:{
+                assertExpr(stack);
+                const int a = stack->data;
+                Stack *next = stack->next;
+                assertExpr(next);
+                assertExpr(a != 0);
+                next->data /= a;
+                free(stack);
+                stack = next;
+                token = token->next;
+                break;}
             case I_PUSH:
                 token = token->next;
                 assertExpr(token);
@@ -142,6 +164,14 @@ int main(int argc, char **argv)
                 stack = stackPush(stack, stackNew((int)nat * (neg ? -1 : 1)));
                 token = token->next;
                 break;
+            case I_POP:{
+                assertExpr(stack);
+                Stack *next = stack->next;
+                free(stack);
+                stack = next;
+                token = token->next;
+                break;
+                }
             case I_DUP:
                 stack = stackPush(stack, stackNew(stack->data));
                 token = token->next;
